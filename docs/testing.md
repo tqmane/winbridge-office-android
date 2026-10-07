@@ -88,3 +88,31 @@ this regression. Initial prefix creation still takes several minutes.
 ODT 16.0.20326.20112 ran in the standalone prefix and began downloading Office
 64-bit build 16.0.20430.20146 from Microsoft. Payload growth was observed; that is
 not yet an installation, Word, activation or editing success claim.
+
+## Direct input and runtime cost
+
+The opt-in direct Windows input backend built and passed lint, its host
+cryptographic/parser self-test, and `scripts/check_direct_input.py` on Android.
+The test rejected an invalid MAC and a replayed sequence, then used Android
+typing/Ctrl+S/pathname/Enter to save exact text in Notepad. The Wine helper's
+matching session counted the injected Win32 events. Companion packages remained
+disabled. Pointer/right-click/wheel/IME/pen validation is still outstanding.
+
+Office `/download` completed. The subsequent setup spent 31m 6s validating
+10,480 tasks, then extracted 2.2 GB into the staging directory. The user found
+the runtime too heavy, so Wine/Office were stopped with the download cache
+preserved. No completed Office installation or editor is claimed.
+
+The dedicated AVD was restarted with 2 vCPUs, 3072 MB guest RAM and `-gpu host`;
+logs confirmed hardware graphics. `-gpu auto` had still selected software
+rendering, so it was not sufficient. The tablet resolution/density stayed
+2560x1600/240. The Gradle heap ceiling is now 768 MB with one worker. Other AVDs
+and physical devices were not modified.
+
+The incomplete Click-to-Run service automatically restarted with Wine Notepad.
+For isolated input tests only, its `ClickToRunSvc` Start value was changed from
+2 (automatic) to 3 (manual) while Wine was stopped; the original registry is kept
+in ignored local artifacts. This is not a shipped Office compatibility tweak.
+After isolation, a 3-second idle emulator sample used 0.06 CPU-seconds/second;
+that is not an Office installation speed comparison. Fixing the Wine/PRoot
+execution cost remains a separate performance gate before another full install.

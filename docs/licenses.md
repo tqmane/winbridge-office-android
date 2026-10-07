@@ -28,3 +28,12 @@ source repository does not contain fetched object-code packages.
 Office, ODT, Microsoft fonts, account data and activation files are never build
 inputs or repository assets. Download Microsoft software only into the user's
 runtime. Preserve Microsoft's licensing and authentication behavior.
+
+## Direct input helper
+
+`native/windows-input.c` is project source under GPL-3.0-or-later. The pinned
+LLVM-MinGW build uses mingw-w64 revision
+`a3d93999ef0521681d45e445c39964a7af0f593f`; its notices and the LLVM runtime
+license are retained in `native/windows-input-notices.txt` and copied into the
+APK assets by `scripts/build_native_input.py`. No Microsoft binary is used as a
+build input or redistributed by this helper.

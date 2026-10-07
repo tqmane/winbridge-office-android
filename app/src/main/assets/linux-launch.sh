@@ -34,6 +34,7 @@ if [[ ! -f "$WINEPREFIX/.winbridge-initialized" ]]; then
     touch "$WINEPREFIX/.winbridge-initialized"
 fi
 flock -u 9
+wine /winbridge/windows-input.exe >>/winbridge/logs/direct-input.log 2>&1 &
 case "$action" in
     notepad) wine notepad.exe ;;
     winecfg) wine winecfg ;;
@@ -69,8 +70,9 @@ XML
         ;;
     word|excel|powerpoint)
         case "$action" in word) exe=WINWORD.EXE;; excel) exe=EXCEL.EXE;; powerpoint) exe=POWERPNT.EXE;; esac
-        app=$(find "$WINEPREFIX/drive_c/Program Files" -type f -iname "$exe" -print -quit)
-        [[ -n "$app" ]] || { echo "Microsoft Office is not installed: $exe missing." >&2; exit 1; }
+        # Only installed applications: Click-to-Run also stages incomplete EXEs under Updates/.
+        app="$WINEPREFIX/drive_c/Program Files/Microsoft Office/root/Office16/$exe"
+        [[ -f "$app" ]] || { echo "Microsoft Office is not installed: $exe missing." >&2; exit 1; }
         wine "$app" ;;
 esac
 # Keep the foreground job alive while any application uses the shared wineserver.

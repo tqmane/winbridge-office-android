@@ -19,6 +19,8 @@ remain in development. See [the evidence ledger](docs/testing.md).
 The APK currently embeds an X11 display component; no separate X11 app is
 required. The preferred final native Android input path is a separate milestone:
 see [native-input investigation](docs/native-input.md).
+An opt-in direct Win32 input experiment has passed Android typing and saving;
+the picture still uses X11 and full pointer/IME validation remains.
 
 ## Requirements and limits
 
@@ -50,6 +52,7 @@ Use JDK 17, Android SDK 36, Python 3, Git and the Gradle wrapper. Check out
 git submodule update --init third_party/proot third_party/termux-x11
 python scripts/fetch_native.py --self-test
 python scripts/fetch_native.py
+python scripts/build_native_input.py
 $env:ANDROID_HOME = "$env:LOCALAPPDATA/Android/Sdk"
 ./gradlew.bat assembleDebug lintDebug --no-daemon --max-workers=1
 ```
@@ -58,6 +61,9 @@ The fetch step verifies the pinned [native SDK](https://github.com/tqmane/winbri
 which includes the patched PRoot and dependency notices. Its complete component
 sources and build scripts are published alongside the binary inputs. Normal APK
 builds do not need Termux. The build rejects an unpatched PRoot executable.
+The input helper build uses checksum-pinned LLVM-MinGW on Windows, or an
+explicit `--cc x86_64-w64-mingw32-gcc` on another host. It builds only our own
+source and runs a host self-test without injecting host input.
 
 To rebuild and regression-test PRoot itself, `scripts/build_proot_poc.py` uses a
 bootstrapped GitHub debug Termux in the **dedicated development AVD** as a C build
@@ -72,7 +78,10 @@ currently unsuitable for Wine execution.
 
 `scripts/Start-TabletEmulator.ps1` creates a dedicated Pixel 9 profile AVD using
 `system-images;android-36.1;google_apis_playstore;x86_64`, with 32 GB data stored
-under ignored workspace files. It uses `emulator-5580` and applies:
+under ignored workspace files. It uses `emulator-5580` with 2 vCPUs, 3 GB RAM
+and host GPU rendering. Use
+`-Gpu software` only when host graphics are unavailable; this increases CPU cost.
+The tablet display settings are:
 
 ```powershell
 adb -s emulator-5580 shell wm size 2560x1600

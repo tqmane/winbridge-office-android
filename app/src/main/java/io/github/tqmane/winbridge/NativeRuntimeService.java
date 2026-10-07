@@ -92,7 +92,19 @@ public final class NativeRuntimeService extends Service {
                         }
                         if (action.equals("stop")) { status("All Wine sessions stopped."); return; }
                     }
-                    if (!List.of("status", "stop", "reset").contains(action)) startDisplay();
+                    if (!List.of("status", "stop", "reset").contains(action)) {
+                        copyScript("windows-input.exe");
+                        File inputKey = new File(directory("runtime"), ".input-key");
+                        synchronized (this) {
+                            if (!inputKey.isFile()) {
+                                byte[] key = new byte[32];
+                                new java.security.SecureRandom().nextBytes(key);
+                                Files.write(inputKey.toPath(), key);
+                                android.system.Os.chmod(inputKey.getAbsolutePath(), 0600);
+                            }
+                        }
+                        startDisplay();
+                    }
                     status(linux("/bin/bash", "/winbridge/linux-launch.sh", action));
                 }
             } catch (Exception error) { if (!stopping) status("Integrated runtime failed: " + error); }

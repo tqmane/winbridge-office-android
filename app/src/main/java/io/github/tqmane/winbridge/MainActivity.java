@@ -62,6 +62,12 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout integrated = row(page);
         button(integrated, "Test integrated Linux runtime", () -> startForegroundService(
             new Intent(this, NativeRuntimeService.class).setAction("native-smoke")));
+        android.widget.Switch directInput = new android.widget.Switch(this);
+        directInput.setText("Direct Windows input (experimental)");
+        var settings = getSharedPreferences("settings", 0);
+        directInput.setChecked(settings.getBoolean("direct_input", false));
+        directInput.setOnCheckedChangeListener((button, checked) -> settings.edit().putBoolean("direct_input", checked).apply());
+        page.addView(directInput);
         output = new TextView(this);
         output.setTextSize(14);
         output.setTextIsSelectable(true);

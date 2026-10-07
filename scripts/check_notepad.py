@@ -1,7 +1,7 @@
-"""Exercise Android keyboard -> embedded X11 -> Wine -> saved bytes on the test AVD.
+"""Exercise Android keyboard -> selected input backend -> Wine -> saved bytes.
 
 Requires an installed, initialized runtime and a blank Notepad in the foreground.
-Uses X11 automation only to fill the save path and inspect window state.
+Uses X11 automation only to select and inspect window state, never to inject input.
 """
 from pathlib import Path
 import subprocess
@@ -40,7 +40,7 @@ name = "input-proof-" + token + ".txt"
 avd.shell("input", "keyboard", "text", payload.replace(" ", "%s"))
 avd.shell("input", "keyboard", "keycombination", "113", "47")  # Ctrl+S
 wait_for(lambda: linux("xdotool", "search", "--name", "^Save As$", check=False).returncode == 0)
-linux("xdotool", "type", "--clearmodifiers", "--delay", "60", "Z:\\winbridge\\" + name)
+avd.shell("input", "keyboard", "text", "Z:\\winbridge\\" + name)
 avd.shell("input", "keyboard", "keyevent", "KEYCODE_ENTER")
 
 

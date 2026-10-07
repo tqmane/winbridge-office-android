@@ -17,11 +17,15 @@ android {
     }
     packagingOptions.jniLibs.useLegacyPackaging = true
     sourceSets.main.assets.srcDir rootProject.file('.local/sdk-assets')
+    sourceSets.main.assets.srcDir rootProject.file('.local/input-assets')
 }
 dependencies { implementation project(':lorie') }
 
 tasks.named('preBuild') {
     doFirst {
+        if (!rootProject.file('.local/input-assets/windows-input.exe').exists()) {
+            throw new GradleException('Run python scripts/build_native_input.py before building the app.')
+        }
         def proot = rootProject.file('.local/native/x86_64/libproot.so')
         if (!proot.exists() || !new String(proot.bytes, 'ISO-8859-1').contains('5.1.107.96-winbridge')) {
             throw new GradleException('Missing patched PRoot. Run scripts/build_proot_poc.py; the upstream binary fails the i386 IPC check.')

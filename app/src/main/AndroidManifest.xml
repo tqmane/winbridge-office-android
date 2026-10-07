@@ -2,7 +2,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:node="remove" tools:ignore="ProtectedPermissions" />
-    <application android:label="WinBridge Office" android:icon="@drawable/ic_bridge"
+    <application android:name=".WinBridgeApp" tools:replace="android:name"
+        android:label="WinBridge Office" android:icon="@drawable/ic_bridge"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:allowBackup="false" android:supportsRtl="true">
         <activity android:name=".MainActivity" android:exported="true"
