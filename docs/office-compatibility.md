@@ -1,9 +1,18 @@
 # Office compatibility investigation
 
 Office is not installed or verified in this project yet. The official ODT has
-launched and its `/download` stage is retrieving build 16.0.20430.20146 inside
+launched and its `/download` stage obtained build 16.0.20430.20146 inside
 the standalone app's shared prefix. Do not infer Office
 support from a successful APK build, Linux shell or Wine version command.
+
+The first `/configure` attempt was stopped because of excessive runtime cost.
+The service log showed `DownloadManagerBase::ValidateTasks` completing 10,480
+tasks in 31 minutes 6 seconds, followed by real extraction into
+`Microsoft Office/Updates/Download/PackageFiles` (2.2 GB observed). These staged
+EXEs are not a completed installation. The official download cache is retained.
+The PRoot tracer and wineserver consumed substantial CPU during the operation;
+the individual cost of tracing and Wine synchronization still needs a controlled
+comparison. Do not repeat this long installation unchanged as a performance test.
 
 ## Official installation path
 

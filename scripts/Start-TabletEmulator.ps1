@@ -2,6 +2,9 @@ param(
     [string]$Sdk = "$env:LOCALAPPDATA/Android/Sdk",
     [string]$Name = 'WinBridge_Pixel9_API36',
     [int]$Port = 5580,
+    [ValidateRange(1, 8)][int]$Cores = 2,
+    [ValidateRange(2048, 8192)][int]$MemoryMB = 3072,
+    [ValidateSet('auto', 'host', 'software')][string]$Gpu = 'host',
     [string]$Image = 'system-images;android-36.1;google_apis_playstore;x86_64',
     [string]$AvdDirectory = "$PSScriptRoot/../.local/avd/WinBridge_Pixel9_API36.avd"
 )
@@ -22,7 +25,7 @@ if (!(Test-Path -LiteralPath $config)) {
     if ($LASTEXITCODE) { throw 'AVD creation failed. Install the specified system image first.' }
     $settings = Get-Content -LiteralPath $config
     $overrides = @{
-        'disk.dataPartition.size' = '32G'; 'hw.ramSize' = '4096'; 'hw.cpu.ncore' = '4'
+        'disk.dataPartition.size' = '32G'; 'hw.ramSize' = "$MemoryMB"; 'hw.cpu.ncore' = "$Cores"
         'hw.keyboard' = 'yes'; 'showDeviceFrame' = 'no'; 'hw.gpu.enabled' = 'yes'
     }
     foreach ($key in $overrides.Keys) {
@@ -38,7 +41,8 @@ if (!($devices -match "^$serial\s+device")) {
     $logs = Join-Path $PSScriptRoot '../artifacts'
     New-Item -ItemType Directory -Force -Path $logs | Out-Null
     $process = Start-Process -FilePath $emulator -ArgumentList @('-avd', $Name, '-port', $Port,
-        '-no-snapshot', '-no-boot-anim', '-no-audio', '-no-window', '-gpu', 'software') `
+        '-no-snapshot', '-no-boot-anim', '-no-audio', '-no-window', '-gpu', $Gpu,
+        '-cores', $Cores, '-memory', $MemoryMB) `
         -WindowStyle Hidden -RedirectStandardOutput "$logs/emulator.stdout.log" `
         -RedirectStandardError "$logs/emulator.stderr.log" -PassThru
 }
@@ -51,6 +55,11 @@ do {
 } until ($boot -match '^1')
 $actualName = & $adb -s $serial emu avd name
 if ($actualName[0].Trim() -ne $Name) { throw "Port belongs to another AVD: $($actualName[0])" }
+$runtime = @(Get-CimInstance Win32_Process | Where-Object {
+    $_.Name -eq 'qemu-system-x86_64-headless.exe' -and
+    $_.CommandLine -match "-avd $([regex]::Escape($Name)) -port $Port(?:\s|$)"
+})
+if ($runtime.Count -eq 1) { (Get-Process -Id $runtime[0].ProcessId).PriorityClass = 'BelowNormal' }
 & $adb -s $serial shell wm size 2560x1600
 & $adb -s $serial shell wm density 240
 & $adb -s $serial shell settings put system accelerometer_rotation 0
