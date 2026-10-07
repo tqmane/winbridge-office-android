@@ -66,6 +66,11 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         button(lifecycle, "Show Windows desktop", this::showDisplay);
         button(lifecycle, "Stop Wine", () -> confirm("Stop all Wine applications? Save your documents first.", "stop"));
         button(lifecycle, "Reset prefix", () -> confirm("Archive the current prefix and create a new one? Office will need reinstalling.", "reset"));
+        LinearLayout integrated = row(page);
+        button(integrated, "Test integrated Linux runtime", () -> startForegroundService(
+            new Intent(this, NativeRuntimeService.class).setAction("native-smoke")));
+        button(integrated, "Initialize integrated Wine", () -> startForegroundService(
+            new Intent(this, NativeRuntimeService.class).setAction("init")));
         output = new TextView(this);
         output.setTextSize(14);
         output.setTextIsSelectable(true);

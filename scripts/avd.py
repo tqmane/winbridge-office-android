@@ -22,18 +22,27 @@ def adb(*args, **kwargs):
 
 
 def shell(*args, **kwargs):
-    return adb("shell", shlex.join(args), **kwargs)
+    return adb("shell", "-T", shlex.join(args), **kwargs)
 
 
-def main():
+def verify_target():
+    if not re.fullmatch(r"emulator-\d+", SERIAL):
+        raise SystemExit("Physical devices are forbidden for this project")
     name = adb("emu", "avd", "name", capture_output=True, text=True).stdout.splitlines()[0]
     if name != "WinBridge_Pixel9_API36":
         raise SystemExit(f"Refusing to operate on another AVD: {name!r}")
+
+
+def main():
+    verify_target()
     command, *args = sys.argv[1:]
     if command == "shell":
         shell(*args)
     elif command == "termux":
-        shell("run-as", "com.termux", "sh", "-c", shlex.join(args))
+        shell("run-as", "com.termux", "sh", "-c",
+              "export HOME=/data/data/com.termux/files/home PREFIX=/data/data/com.termux/files/usr "
+              "TMPDIR=/data/data/com.termux/files/usr/tmp PATH=/data/data/com.termux/files/usr/bin:/system/bin; "
+              + shlex.join(args))
     elif command == "screenshot":
         Path(args[0]).write_bytes(adb("exec-out", "screencap", "-p", capture_output=True).stdout)
     elif command == "click":

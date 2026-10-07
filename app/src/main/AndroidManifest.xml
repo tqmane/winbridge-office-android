@@ -1,4 +1,7 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:node="remove" />
     <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
     <queries>
         <package android:name="com.termux" />
@@ -39,5 +42,16 @@
             </intent-filter>
         </activity>
         <receiver android:name=".RuntimeResult" android:exported="false" />
+        <service android:name=".NativeRuntimeService" android:exported="false"
+            android:process=":runtime" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-visible Windows application runtime and X11 display" />
+        </service>
+        <activity android:name="com.termux.x11.MainActivity" android:exported="false"
+            android:label="WinBridge desktop" tools:replace="android:exported,android:label">
+            <intent-filter tools:node="removeAll" />
+        </activity>
+        <receiver android:name="com.termux.x11.LoriePreferences$Receiver" android:exported="false" tools:replace="android:exported" />
+        <receiver android:name="com.termux.x11.LorieApp$Receiver" android:exported="false" tools:replace="android:exported" />
     </application>
 </manifest>

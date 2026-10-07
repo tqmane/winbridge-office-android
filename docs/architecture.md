@@ -19,3 +19,6 @@ Testing uses a dedicated Pixel 9 profile AVD with 32 GB data on the workspace
 drive. A different chat owns the pre-existing Pixel_9 AVD; do not modify, stop,
 clear or install to that shared emulator. Every ADB action must specify the
 verified dedicated emulator serial. Do not restart the shared ADB server.
+The connected A059 physical device is explicitly out of scope: never install,
+launch, inspect, reboot or otherwise operate on it. The test helper rejects
+physical-device serials before issuing any ADB call.

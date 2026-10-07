@@ -8,6 +8,7 @@ export PATH="$PREFIX/bin:/system/bin"
 export TMPDIR="$PREFIX/tmp"
 work="$HOME/.local/share/winbridge"
 mkdir -p "$work/logs"
+if [[ -x "$work/native/proot" ]]; then export PD_PROOT_BIN="$work/native/proot"; fi
 action=${1:-status}
 case "$action" in
     status|init|notepad|winecfg|word|excel|powerpoint|install-office|stop|reset|logs) ;;
@@ -38,6 +39,7 @@ if [[ "$action" == init ]]; then
     container /bin/bash -s <<'LINUX'
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
+printf 'Acquire::http::Pipeline-Depth "0";\nAcquire::Retries "3";\n' >/etc/apt/apt.conf.d/99winbridge-network
 apt-get update
 apt-get install -y --no-install-recommends ca-certificates curl xz-utils \
     libfreetype6 libfontconfig1 libx11-6 libxext6 libxrender1 libxrandr2 libxi6 \
@@ -113,9 +115,10 @@ exec >>"/winbridge/logs/$action.log" 2>&1
 date -Is
 wine --version
 if ! pgrep -x openbox >/dev/null; then openbox >/winbridge/logs/openbox.log 2>&1 & fi
-if [[ ! -f "$WINEPREFIX/system.reg" ]]; then
+if [[ ! -f "$WINEPREFIX/.winbridge-initialized" ]]; then
     wineboot --init
     wineserver -w
+    touch "$WINEPREFIX/.winbridge-initialized"
 fi
 case "$action" in
     notepad) wine notepad.exe ;;

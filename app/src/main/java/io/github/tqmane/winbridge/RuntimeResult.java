@@ -8,7 +8,7 @@ import android.os.Bundle;
 public final class RuntimeResult extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
         Bundle result = intent.getBundleExtra("result");
-        String text = result == null ? "No runtime result received." :
+        String text = result == null ? intent.getStringExtra("message") :
             "Exit: " + result.getInt("exitCode", -1) + "\n" +
             result.getString("stdout", "") + result.getString("stderr", "") +
             result.getString("errmsg", "");
