@@ -16,6 +16,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     packagingOptions.jniLibs.useLegacyPackaging = true
+    sourceSets.main.assets.srcDir rootProject.file('.local/sdk-assets')
 }
 dependencies { implementation project(':lorie') }
 

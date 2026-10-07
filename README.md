@@ -50,16 +50,19 @@ Use JDK 17, Android SDK 36, Python 3, Git and the Gradle wrapper. Check out
 git submodule update --init third_party/proot third_party/termux-x11
 python scripts/fetch_native.py --self-test
 python scripts/fetch_native.py
-python scripts/build_proot_poc.py
 $env:ANDROID_HOME = "$env:LOCALAPPDATA/Android/Sdk"
 ./gradlew.bat assembleDebug lintDebug --no-daemon --max-workers=1
 ```
 
-The current PRoot compile helper uses a bootstrapped GitHub debug build of
-Termux in the **dedicated development AVD** as its C build host. It builds our
-fork, proves the upstream i386 IPC failure and patched success, then copies the
-patched executable into the ignored native build inputs. Termux is not an APK
-runtime dependency. The build rejects the unpatched PRoot executable.
+The fetch step verifies the pinned [native SDK](https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007),
+which includes the patched PRoot and dependency notices. Its complete component
+sources and build scripts are published alongside the binary inputs. Normal APK
+builds do not need Termux. The build rejects an unpatched PRoot executable.
+
+To rebuild and regression-test PRoot itself, `scripts/build_proot_poc.py` uses a
+bootstrapped GitHub debug Termux in the **dedicated development AVD** as a C build
+host. `fetch_native.py --upstream` retains the original dependency-fetch path.
+This optional developer tool is independent of the APK's runtime.
 
 Output: `app/build/outputs/apk/debug/app-debug.apk`. No Office/ODT binary is in it.
 `-PexecutionTargetSdk=36` selects the modern-target comparison build, which is

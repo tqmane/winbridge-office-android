@@ -5,6 +5,7 @@ an APK. Run --self-test for the archive and ELF packaging regression check.
 """
 import hashlib
 import io
+import json
 from pathlib import Path
 import sys
 import tarfile
@@ -18,6 +19,7 @@ PACKAGES = {
     "talloc": ("libt/libtalloc/libtalloc_2.5.0_x86_64.deb", "b8c6d95f20075dc1f9ec6573575b2444e8d526e48e0d8d6d5cf4e071e6e06530"),
     "shmem": ("liba/libandroid-shmem/libandroid-shmem_0.7_x86_64.deb", "ffa9e4c87467b158b148d0ff92dda796aa038276c2075af3269cdcdb06f25797"),
 }
+NATIVE_NAMES = ("libproot.so", "libproot-loader.so", "libproot-loader32.so", "libtalloc.so", "libandroid-shmem.so", "libXlorie.so")
 
 
 def fetch(url, digest, name):
@@ -79,6 +81,29 @@ def main():
                 raise AssertionError("Invalid archive accepted")
         print("native packaging checks passed")
         return
+    if not sys.argv[1:]:
+        sdk = fetch("https://github.com/tqmane/winbridge-office-android/releases/download/native-sdk-20261007/winbridge-native-x86_64.zip",
+                    "d834ac396d65ae9e437aff13d7e75ad7a5212383c1461a5f8db5518a2ae172ce", "winbridge-native-x86_64.zip")
+        output = ROOT / ".local/native/x86_64"
+        output.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(sdk) as archive:
+            manifest = json.loads(archive.read("manifest.json"))
+            for name in NATIVE_NAMES:
+                data = archive.read("x86_64/" + name)
+                if hashlib.sha256(data).hexdigest() != manifest["sha256"][name]:
+                    raise ValueError("Native SDK member checksum mismatch: " + name)
+                (output / name).write_bytes(data)
+            notices = b"WinBridge native runtime components\nCorresponding source: https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007\n"
+            for name in sorted(archive.namelist()):
+                if name.startswith("licenses/") and not name.endswith("/"):
+                    notices += b"\n\n--- " + name.encode() + b" ---\n" + archive.read(name)
+            assets = ROOT / ".local/sdk-assets"
+            assets.mkdir(parents=True, exist_ok=True)
+            (assets / "third-party-notices.txt").write_bytes(notices)
+        print("Pinned native SDK verified and installed. No Termux build host is required.")
+        return
+    if sys.argv[1:] != ["--upstream"]:
+        raise SystemExit("Usage: fetch_native.py [--self-test | --upstream]")
     output = ROOT / ".local/native/x86_64"
     output.mkdir(parents=True, exist_ok=True)
     packages = {key: deb_files(fetch("https://packages.termux.dev/apt/termux-main/pool/main/" + path,
