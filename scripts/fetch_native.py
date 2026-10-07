@@ -82,8 +82,8 @@ def main():
         print("native packaging checks passed")
         return
     if not sys.argv[1:]:
-        sdk = fetch("https://github.com/tqmane/winbridge-office-android/releases/download/native-sdk-20261007/winbridge-native-x86_64.zip",
-                    "d834ac396d65ae9e437aff13d7e75ad7a5212383c1461a5f8db5518a2ae172ce", "winbridge-native-x86_64.zip")
+        sdk = fetch("https://github.com/tqmane/winbridge-office-android/releases/download/native-sdk-20261007.2/winbridge-native-x86_64.zip",
+                    "979c4eedf04588a90e14d448da03740fa6a8b79612ea2c9293b499bc828fa6e0", "winbridge-native-x86_64.zip")
         output = ROOT / ".local/native/x86_64"
         output.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(sdk) as archive:
@@ -93,7 +93,7 @@ def main():
                 if hashlib.sha256(data).hexdigest() != manifest["sha256"][name]:
                     raise ValueError("Native SDK member checksum mismatch: " + name)
                 (output / name).write_bytes(data)
-            notices = b"WinBridge native runtime components\nCorresponding source: https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007\n"
+            notices = b"WinBridge native runtime components\nCorresponding source: https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007.2\n"
             for name in sorted(archive.namelist()):
                 if name.startswith("licenses/") and not name.endswith("/"):
                     notices += b"\n\n--- " + name.encode() + b" ---\n" + archive.read(name)

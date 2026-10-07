@@ -19,7 +19,7 @@ Before publicly distributing an APK with these libraries, publish the complete
 corresponding source and build/packaging scripts alongside it, including recursive
 X11 submodule sources, the exact Termux package recipes and patches, upstream
 tarballs and notices. A link to a moving upstream branch alone is insufficient.
-The [native SDK prerelease](https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007)
+The [native SDK prerelease](https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007.2)
 ships the component notices and a corresponding-source archive, including all
 X11 submodules and the Termux recipes. The APK build also includes those notices
 as `assets/third-party-notices.txt`. No APK release has been published yet. The

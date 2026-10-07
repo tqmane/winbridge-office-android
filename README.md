@@ -57,7 +57,7 @@ $env:ANDROID_HOME = "$env:LOCALAPPDATA/Android/Sdk"
 ./gradlew.bat assembleDebug lintDebug --no-daemon --max-workers=1
 ```
 
-The fetch step verifies the pinned [native SDK](https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007),
+The fetch step verifies the pinned [native SDK](https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007.2),
 which includes the patched PRoot and dependency notices. Its complete component
 sources and build scripts are published alongside the binary inputs. Normal APK
 builds do not need Termux. The build rejects an unpatched PRoot executable.
