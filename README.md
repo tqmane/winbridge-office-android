@@ -6,10 +6,33 @@ Microsoft, Wine, Bottles or Termux product.
 
 ## Status
 
-Development has just started. No Wine or Office runtime is verified yet.
-The first target is an Android 16 x86_64 Pixel 9 AVD with a tablet-size landscape
-display. Windows GUI and Office compatibility are separate verification gates.
-ARM64 is a later target, not currently supported.
+The x86_64 runtime PoC now runs Wine Notepad inside a standalone APK, with both
+Termux companion packages disabled. On a dedicated Android 16 Pixel 9 AVD at
+2560x1600 / 240 dpi, automated checks passed Android typing, Ctrl+S, Enter, saved
+file contents, X11 authentication, stopping Wine and relaunching Notepad.
+
+**Word, Excel and PowerPoint are not verified yet.** The official Office
+Deployment Tool has been downloaded, verified, extracted and launched for the
+next experiment. ARM64, document intents and complete lifecycle/input support
+remain in development. See [the evidence ledger](docs/testing.md).
+
+The APK currently embeds an X11 display component; no separate X11 app is
+required. The preferred final native Android input path is a separate milestone:
+see [native-input investigation](docs/native-input.md).
+An opt-in direct Win32 input experiment has passed Android typing and saving;
+the picture still uses X11 and full pointer/IME validation remains.
+
+## Requirements and limits
+
+- Initial test ABI: x86_64. ARM64 is not implemented yet.
+- Android 13+ minimum in the manifest; only Android 16 has been tested.
+- Tablet-class landscape display; the test uses 2560x1600 at 240 dpi.
+- Allow roughly 20 GB for the Linux userland, Wine prefix and Office payload.
+- This PoC uses target SDK 28's execution compatibility for Wine PE mappings.
+  The modern SDK 36 build runs Linux but fails Wine's DLL memory-protection step.
+  This is an explicit limitation, not a Play Store-ready application.
+- A cold prefix initialization is slow. One measured Notepad relaunch after a
+  full Wine stop took 32.4 seconds. Performance work remains.
 
 ## Scope
 
@@ -20,11 +43,90 @@ ARM64 is a later target, not currently supported.
   required; activation remains Microsoft's normal process.
 - Never distribute Microsoft installers, Office binaries, branding or licences.
 
-## Development
+## Build
 
-Build, emulator and Office setup instructions will be added as their paths are
-implemented and tested. See [the evidence ledger](docs/testing.md) for results;
-unfinished items are not claims of support.
+Use JDK 17, Android SDK 36, Python 3, Git and the Gradle wrapper. Check out
+`feat/x86-runtime-poc` while development is in progress.
+
+```powershell
+git submodule update --init third_party/proot third_party/termux-x11
+python scripts/fetch_native.py --self-test
+python scripts/fetch_native.py
+python scripts/build_native_input.py
+$env:ANDROID_HOME = "$env:LOCALAPPDATA/Android/Sdk"
+./gradlew.bat assembleDebug lintDebug --no-daemon --max-workers=1
+```
+
+The fetch step verifies the pinned [native SDK](https://github.com/tqmane/winbridge-office-android/releases/tag/native-sdk-20261007.2),
+which includes the patched PRoot and dependency notices. Its complete component
+sources and build scripts are published alongside the binary inputs. Normal APK
+builds do not need Termux. The build rejects an unpatched PRoot executable.
+The input helper build uses checksum-pinned LLVM-MinGW on Windows, or an
+explicit `--cc x86_64-w64-mingw32-gcc` on another host. It builds only our own
+source and runs a host self-test without injecting host input.
+
+To rebuild and regression-test PRoot itself, `scripts/build_proot_poc.py` uses a
+bootstrapped GitHub debug Termux in the **dedicated development AVD** as a C build
+host. `fetch_native.py --upstream` retains the original dependency-fetch path.
+This optional developer tool is independent of the APK's runtime.
+
+Output: `app/build/outputs/apk/debug/app-debug.apk`. No Office/ODT binary is in it.
+`-PexecutionTargetSdk=36` selects the modern-target comparison build, which is
+currently unsuitable for Wine execution.
+
+## Emulator test
+
+`scripts/Start-TabletEmulator.ps1` creates a dedicated Pixel 9 profile AVD using
+`system-images;android-36.1;google_apis_playstore;x86_64`, with 32 GB data stored
+under ignored workspace files. It uses `emulator-5580` with 2 vCPUs, 3 GB RAM
+and host GPU rendering. Use
+`-Gpu software` only when host graphics are unavailable; this increases CPU cost.
+The tablet display settings are:
+
+```powershell
+adb -s emulator-5580 shell wm size 2560x1600
+adb -s emulator-5580 shell wm density 240
+adb -s emulator-5580 shell settings put system accelerometer_rotation 0
+adb -s emulator-5580 shell settings put system user_rotation 0
+adb -s emulator-5580 install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5580 shell am start -n io.github.tqmane.winbridge/.MainActivity
+```
+
+Initialize the runtime from the app, then launch Wine Notepad. For the standalone
+check, disable the two development companions on this AVD and run:
+
+```powershell
+adb -s emulator-5580 shell pm disable-user --user 0 com.termux
+adb -s emulator-5580 shell pm disable-user --user 0 com.termux.x11
+python scripts/check_notepad.py
+python scripts/check_lifecycle.py
+```
+
+The first check expects a blank Notepad. The lifecycle check stops all Wine
+applications and relaunches a blank Notepad before repeating the input test.
+Only the dedicated AVD is allowed; helpers reject physical-device serials and
+other AVD names. Do not use an emulator owned by another task.
+
+## Office setup
+
+Select **Install Microsoft 365** after initializing and testing Wine. The current
+development recipe obtains the hash-pinned ODT from Microsoft, extracts it into
+private runtime storage, then runs its download/configure commands. The initial
+configuration is Microsoft 365 Apps for enterprise (`O365ProPlusRetail`), 64-bit,
+English, with a visible installer and normal Microsoft licence acceptance.
+Use a licence appropriate to the selected edition. Account sign-in remains with
+Microsoft; this app does not implement activation.
+
+This path is being tested, not claimed to work yet. Details and observed failures
+belong in [Office compatibility](docs/office-compatibility.md). Word/Excel/
+PowerPoint share one prefix. Reset archives that prefix instead of deleting it.
+
+## Upstream components
+
+The PoC uses patched PRoot, talloc, Android shared-memory support, the embedded
+Termux:X11 library, Ubuntu Base and Soda 11.0-27. See
+[upstream investigation](docs/upstreams.md), [architecture](docs/architecture.md)
+and [component licences / source obligations](docs/licenses.md).
 
 ## Licence
 

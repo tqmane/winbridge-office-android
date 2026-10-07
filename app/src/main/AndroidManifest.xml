@@ -1,0 +1,53 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:node="remove" tools:ignore="ProtectedPermissions" />
+    <application android:name=".WinBridgeApp" tools:replace="android:name"
+        android:label="WinBridge Office" android:icon="@drawable/ic_bridge"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:allowBackup="false" android:supportsRtl="true">
+        <activity android:name=".MainActivity" android:exported="true"
+            android:resizeableActivity="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".MainActivity$WordActivity" android:label="Word"
+            android:icon="@drawable/ic_word" android:exported="true"
+            android:taskAffinity="io.github.tqmane.winbridge.word" android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".MainActivity$ExcelActivity" android:label="Excel"
+            android:icon="@drawable/ic_excel" android:exported="true"
+            android:taskAffinity="io.github.tqmane.winbridge.excel" android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".MainActivity$PowerPointActivity" android:label="PowerPoint"
+            android:icon="@drawable/ic_slides" android:exported="true"
+            android:taskAffinity="io.github.tqmane.winbridge.powerpoint" android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <receiver android:name=".RuntimeResult" android:exported="false" />
+        <service android:name=".NativeRuntimeService" android:exported="false"
+            android:process=":runtime" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-visible Windows application runtime and X11 display" />
+        </service>
+        <activity android:name="com.termux.x11.MainActivity" android:exported="false"
+            android:label="WinBridge desktop" tools:replace="android:exported,android:label">
+            <intent-filter tools:node="removeAll" />
+        </activity>
+        <receiver android:name="com.termux.x11.LoriePreferences$Receiver" android:exported="false" tools:replace="android:exported" />
+        <receiver android:name="com.termux.x11.LorieApp$Receiver" android:exported="false" tools:replace="android:exported" />
+    </application>
+</manifest>

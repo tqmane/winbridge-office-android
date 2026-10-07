@@ -1,0 +1,6 @@
+[submodule "third_party/termux-x11"]
+	path = third_party/termux-x11
+	url = https://github.com/tqmane/winbridge-x11.git
+[submodule "third_party/proot"]
+	path = third_party/proot
+	url = https://github.com/tqmane/winbridge-proot.git

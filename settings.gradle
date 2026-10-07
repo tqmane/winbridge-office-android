@@ -1,0 +1,9 @@
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+rootProject.name = 'WinBridgeOffice'
+include ':app'
+include ':lorie', ':shell-loader:stub'
+project(':lorie').projectDir = file('third_party/termux-x11/lorie')
+project(':shell-loader').projectDir = file('third_party/termux-x11/shell-loader')
+project(':shell-loader').buildFileName = 'host-group.gradle'
+project(':shell-loader:stub').projectDir = file('third_party/termux-x11/shell-loader/stub')
