@@ -21,7 +21,7 @@ script = r'''
 set -eu
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y clang make libtalloc libandroid-shmem
+apt-get install -y clang make proot libtalloc libandroid-shmem
 cd "$HOME/winbridge-proot"
 export CPPFLAGS='-DARG_MAX=131072 -DVERSION=\"5.1.107.96-winbridge\"'
 make -C src -j2 CC=clang PROOT_WITH_LIBANDROID_SHMEM=true \
