@@ -14,13 +14,25 @@ def control(*args):
     subprocess.run([sys.executable, helper, *args], check=True)
 
 
+# Two independent Wine launch sessions exposed a PRoot SIGTERM-ignore bug.
+for _ in range(2):
+    avd.shell("am", "start", "-W", "-n", "io.github.tqmane.winbridge/.MainActivity")
+    control("click", "Wine Notepad")
+deadline = time.monotonic() + 120
+while True:
+    windows = subprocess.run([sys.executable, helper, "linux", "xdotool", "search", "--name", "^Untitled - Notepad$"], capture_output=True)
+    if len(windows.stdout.splitlines()) >= 2:
+        break
+    if time.monotonic() > deadline:
+        raise AssertionError("Two Notepad sessions did not appear")
+    time.sleep(.5)
 avd.shell("am", "start", "-W", "-n", "io.github.tqmane.winbridge/.MainActivity")
 control("click", "Stop Wine")
 control("click", "Continue")
 deadline = time.monotonic() + 30
 while True:
     processes = avd.shell("ps", "-A", "-o", "NAME", capture_output=True).stdout
-    if not re.search(rb"(?:notepad\.exe|wineserver)\r?$", processes, re.M):
+    if not re.search(rb"(?:notepad\.exe|windows-input\.exe|wineserver)\r?$", processes, re.M):
         break
     if time.monotonic() > deadline:
         raise AssertionError("Wine processes survived Stop Wine")

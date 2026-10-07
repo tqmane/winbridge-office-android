@@ -116,3 +116,17 @@ in ignored local artifacts. This is not a shipped Office compatibility tweak.
 After isolation, a 3-second idle emulator sample used 0.06 CPU-seconds/second;
 that is not an Office installation speed comparison. Fixing the Wine/PRoot
 execution cost remains a separate performance gate before another full install.
+
+The two-session lifecycle test subsequently exposed a real shutdown bug:
+PRoot ignored SIGTERM, while Android's `Process.destroyForcibly()` inherited the
+default implementation that repeats `destroy()`. The PRoot fork now handles
+SIGTERM by killing and reaping its tracees. The app verifies process exit before
+reporting success and reports termination failures without moving the prefix.
+`check_lifecycle.py` now opens two Notepad sessions before stopping them.
+
+The updated test passed full stop, relaunch in 10.9 s, Android typing, Ctrl+S,
+pathname, Enter and exact saved contents with direct input enabled. Normal Wine
+launches no longer use PRoot's simulated-root extension; package installation
+still does. `USER=root` preserves the existing Windows profile name independently
+of the actual Linux UID. This startup sample used the newer AVD configuration
+and is not a controlled measurement of that single change or of Office speed.

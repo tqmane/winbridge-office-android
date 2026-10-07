@@ -86,9 +86,15 @@ public final class NativeRuntimeService extends Service {
                         linux("/bin/bash", "/winbridge/linux-launch.sh", "stop");
                         List<Process> running;
                         synchronized (sessions) { running = List.copyOf(sessions); }
+                        android.util.Log.i("WinBridgeRuntime", "Stopping " + running.size() + " tracked Wine sessions");
                         for (Process session : running) {
+                            android.util.Log.i("WinBridgeRuntime", "Stopping " + session);
                             session.destroy();
-                            if (!session.waitFor(3, java.util.concurrent.TimeUnit.SECONDS)) session.destroyForcibly();
+                            if (!session.waitFor(3, java.util.concurrent.TimeUnit.SECONDS)) {
+                                session.destroyForcibly();
+                                if (!session.waitFor(3, java.util.concurrent.TimeUnit.SECONDS))
+                                    throw new IllegalStateException("A Wine session did not stop; the prefix was left intact.");
+                            }
                         }
                         if (action.equals("stop")) { status("All Wine sessions stopped."); return; }
                     }
@@ -107,7 +113,10 @@ public final class NativeRuntimeService extends Service {
                     }
                     status(linux("/bin/bash", "/winbridge/linux-launch.sh", action));
                 }
-            } catch (Exception error) { if (!stopping) status("Integrated runtime failed: " + error); }
+            } catch (Exception error) {
+                if (!stopping || action.equals("stop") || action.equals("reset"))
+                    status("Integrated runtime failed: " + error);
+            }
             finally {
                 if (action.equals("stop") || action.equals("reset")) stopping = false;
                 active.decrementAndGet();
@@ -201,11 +210,14 @@ public final class NativeRuntimeService extends Service {
         String nativeDir = getApplicationInfo().nativeLibraryDir;
         String root = new File(getFilesDir(), "linux").getAbsolutePath();
         String tmp = new File(getFilesDir(), "run").getAbsolutePath();
-        List<String> arguments = new ArrayList<>(List.of(nativeDir + "/libproot.so", "--kill-on-exit", "--link2symlink", "--sysvipc", "-L",
-            "-0", "-r", root, "-w", "/root", "-b", "/dev", "-b", "/proc", "-b", "/sys",
+        List<String> arguments = new ArrayList<>(List.of(nativeDir + "/libproot.so", "--kill-on-exit", "--link2symlink", "--sysvipc", "-L"));
+        // Only the package manager needs simulated root; Wine can keep the real app UID.
+        if (command.length > 1 && command[1].equals("/winbridge/linux-setup.sh")) arguments.add("-0");
+        arguments.addAll(List.of("-r", root, "-w", "/root", "-b", "/dev", "-b", "/proc", "-b", "/sys",
             "-b", tmp + ":/tmp", "-b", tmp + "/shm:/dev/shm",
             "-b", new File(getFilesDir(), "runtime").getAbsolutePath() + ":/winbridge",
-            "/usr/bin/env", "-i", "HOME=/root", "PATH=/usr/bin:/bin", "LANG=C.UTF-8", "TMPDIR=/tmp"));
+            // Keep the existing Windows profile name independently of the Linux UID.
+            "/usr/bin/env", "-i", "HOME=/root", "USER=root", "PATH=/usr/bin:/bin", "LANG=C.UTF-8", "TMPDIR=/tmp"));
         arguments.addAll(List.of(command));
         ProcessBuilder builder = new ProcessBuilder(arguments).directory(getFilesDir());
         nativeEnvironment(builder);
@@ -239,6 +251,7 @@ public final class NativeRuntimeService extends Service {
                 if (stopping) throw new java.util.concurrent.CancellationException("Runtime is stopping");
                 process = builder.start();
                 sessions.add(process);
+                android.util.Log.i("WinBridgeRuntime", "Started Wine session " + process);
             }
         } else process = builder.start();
         int exit;

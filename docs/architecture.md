@@ -9,10 +9,12 @@ existing Surface/input bridges before choosing that backend. The embedded X11
 implementation remains a compatibility PoC, not a requirement for the final
 input architecture. Reuse appropriately licensed upstream source where possible.
 
-The first experimental backend uses Termux's RUN_COMMAND service, PRoot-Distro,
-and Termux:X11 to isolate Wine and Office compatibility on x86_64 Android.
-This backend is a diagnostic PoC, not the finished architecture. It must be
-replaced before claiming the standalone-APK milestone.
+The current APK owns a private Linux rootfs, PRoot process host and embedded
+display. It runs without either Termux companion package. The old RUN_COMMAND
+experiment remains under `experiments/` and is not packaged. Linux package setup
+uses simulated root; normal Wine sessions run as the actual app UID, with their
+Windows profile name preserved. The opt-in direct input adapter bypasses X11
+input forwarding while retaining the existing display for compatibility tests.
 
 Only one Wine prefix is installed, irrespective of launcher entry. The three
 Android entry activities have distinct task affinities. The initial X11 PoC

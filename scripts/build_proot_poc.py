@@ -23,7 +23,8 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y clang make proot libtalloc libandroid-shmem
 cd "$HOME/winbridge-proot"
-export CPPFLAGS='-DARG_MAX=131072 -DVERSION=\"5.1.107.96-winbridge\"'
+export CPPFLAGS='-DARG_MAX=131072 -DVERSION=\"5.1.107.96-winbridge.2\"'
+make -C src clean
 make -C src -j2 CC=clang PROOT_WITH_LIBANDROID_SHMEM=true \
     PROOT_UNBUNDLE_LOADER="$PREFIX/libexec/proot"
 clang --target=i686-linux-android24 -O2 -mstackrealign -ffreestanding -fno-stack-protector -fno-pie \

@@ -35,7 +35,7 @@ def add_git(output, repo, prefix, paths=()):
 
 def main():
     binary = ROOT / ".local/native/x86_64/libproot.so"
-    assert b"5.1.107.96-winbridge" in binary.read_bytes()
+    assert b"5.1.107.96-winbridge.2" in binary.read_bytes()
     sources = {
         "project": git(ROOT, "rev-parse", "HEAD").decode().strip(),
         "proot": git(ROOT / "third_party/proot", "rev-parse", "HEAD").decode().strip(),
