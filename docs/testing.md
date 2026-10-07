@@ -6,16 +6,17 @@ Office compatibility.
 
 | Gate | Result |
 | --- | --- |
-| Android APK build / install / launch | Passed on dedicated AVD; original companion build also passed lint |
+| Android APK build / install / launch | Passed on dedicated AVD; standalone build and lint passed |
 | Android 16 x86_64 / tablet display | Passed: Pixel 9 profile, Android 16 (API 36.1 image), 2560x1600, 240 dpi |
-| Linux runtime / native x86_64 Wine | App-owned Ubuntu/glibc smoke passed; Soda 11 version and Wine boot processes confirmed in companion experiment |
-| Wine boot / Win32 window / input | Pending |
-| Terminate / relaunch | Pending |
-| Official Office installer | Pending |
+| Linux runtime / native x86_64 Wine | Passed inside standalone APK with SDK 28 execution profile |
+| Wine boot / Win32 window / input | Notepad GUI, Android keyboard, Ctrl+S/Enter and saved-byte round trip passed; full pointer/stylus tests pending |
+| Terminate / relaunch | Automated stop/relaunch passed; measured Notepad reappearance 32.4 s |
+| Official Office installer | ODT verified, extracted and setup.exe /download running; Office installation itself pending |
 | Word ribbon / document / input | Pending |
 | Excel / PowerPoint | Pending |
 | URI round trip / task lifecycle | Pending |
 | ARM64 | Pending |
+| Native Android input without X11 | Upstream driver inspected; not implemented or tested |
 
 Raw logs, downloads and emulator captures belong in ignored `artifacts/` or
 `.local/`. Publish only reviewed, sanitised evidence. Never publish account data,
@@ -50,4 +51,40 @@ host paths, tokens, document contents or Microsoft binaries.
   through the real Android app/service context before drawing runtime conclusions;
   the same failure was absent when launched by the app's RUN_COMMAND button.
 
-No Win32 application window, Office installation or Office editor is verified yet.
+The companion experiment displayed Wine Notepad with its menus, text and editing
+area after installing both guest font architectures and creating a fresh prefix.
+Linux `xmessage` also rendered correctly. Input validation and the standalone
+Win32 GUI gate remain in progress; Office is not installed or verified.
+
+The standalone APK has now installed the complete guest Wine runtime in its own
+storage, without using Termux. Both companion packages are disabled for subsequent
+tests. A first embedded-display run exposed a Java/native ABI mismatch: the
+nightly release's `target_commitish` was not the source commit of its uploaded
+APK. The APK's DEX identifies `fa3a8b430e2896a19f44c99a9cb056254615ae06`; align the
+Java source, native library and recursively pinned C dependencies to that commit.
+Do not add dummy JNI methods to hide a version mismatch.
+
+## Standalone smoke result
+
+Both `com.termux` and `com.termux.x11` were disabled. The foreground display and
+Linux/Wine processes belonged to WinBridge. With target SDK 28's execution
+profile, Wine Notepad rendered and `scripts/check_notepad.py` passed: Android
+keyboard text, Android Ctrl+S, an automated save path, Android Enter, exact saved
+bytes and rejection of an X client without the private cookie. The full
+`scripts/check_lifecycle.py` then terminated Wine, relaunched Notepad in 32.4 s
+and repeated that input/save check successfully. Screenshot:
+`artifacts/notepad-input-pass.png` (kept local).
+
+The same APK code with target SDK 36 runs the Linux shell and installer setup
+scripts but fails Wine PE executable mappings (`ntdll.dll` protection / noexec
+error). SDK 28 changes the app's execution compatibility domain; SELinux and the
+Android system were not disabled or rooted. The project currently defaults to
+the working compatibility profile and retains the modern-target comparison flag.
+
+Stop Wine initially left traced clients alive after `wineserver -k`. The runtime
+now owns and terminates its PRoot sessions as well. The lifecycle check guards
+this regression. Initial prefix creation still takes several minutes.
+
+ODT 16.0.20326.20112 ran in the standalone prefix and began downloading Office
+64-bit build 16.0.20430.20146 from Microsoft. Payload growth was observed; that is
+not yet an installation, Word, activation or editing success claim.

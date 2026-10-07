@@ -2,11 +2,8 @@ package io.github.tqmane.winbridge;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -15,13 +12,9 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity implements SharedPreferences.OnSharedPreferenceChangeListener {
-    private static final String PERMISSION = "com.termux.permission.RUN_COMMAND";
     private TextView output;
-    private String pendingAction;
     private SharedPreferences state;
     protected String launchAction() { return null; }
 
@@ -47,7 +40,7 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         DisplayMetrics dm = getResources().getDisplayMetrics();
         details.setText("Android " + Build.VERSION.RELEASE + " · " + String.join(", ", Build.SUPPORTED_ABIS)
             + " · " + dm.widthPixels + "×" + dm.heightPixels + " · " + dm.densityDpi + " dpi\n"
-            + "Companions: Termux (GitHub build) and Termux:X11. Enable allow-external-apps in Termux.\n"
+            + "Shared Linux / Wine runtime in this app's private storage.\n"
             + "Office requires your own Microsoft installation and licence.");
         page.addView(details);
         LinearLayout setup = row(page);
@@ -69,8 +62,6 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
         LinearLayout integrated = row(page);
         button(integrated, "Test integrated Linux runtime", () -> startForegroundService(
             new Intent(this, NativeRuntimeService.class).setAction("native-smoke")));
-        button(integrated, "Initialize integrated Wine", () -> startForegroundService(
-            new Intent(this, NativeRuntimeService.class).setAction("init")));
         output = new TextView(this);
         output.setTextSize(14);
         output.setTextIsSelectable(true);
@@ -106,43 +97,24 @@ public class MainActivity extends Activity implements SharedPreferences.OnShared
             .setPositiveButton("Continue", (dialog, which) -> run(action, false)).show();
     }
     private void run(String action, boolean display) {
-        if (checkSelfPermission(PERMISSION) != PackageManager.PERMISSION_GRANTED) {
-            pendingAction = action;
-            requestPermissions(new String[]{PERMISSION}, 1);
-            return;
-        }
-        try (InputStream script = getAssets().open("runtime.sh")) {
-            Intent callback = new Intent(this, RuntimeResult.class).setData(Uri.parse("winbridge:result/" + System.nanoTime()));
-            PendingIntent result = PendingIntent.getBroadcast(this, 0, callback,
-                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE);
-            Intent command = new Intent("com.termux.RUN_COMMAND");
-            command.setClassName("com.termux", "com.termux.app.RunCommandService");
-            command.putExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/bash");
-            command.putExtra("com.termux.RUN_COMMAND_ARGUMENTS", new String[]{"-s", "--", action});
-            command.putExtra("com.termux.RUN_COMMAND_STDIN", new String(script.readAllBytes(), StandardCharsets.UTF_8));
-            command.putExtra("com.termux.RUN_COMMAND_BACKGROUND", true);
-            command.putExtra("com.termux.RUN_COMMAND_COMMAND_LABEL", "WinBridge: " + action);
-            command.putExtra("com.termux.RUN_COMMAND_PENDING_INTENT", result);
-            state.edit().putString("result", "Running: " + action + "\nSee the Termux notification for the active session.").apply();
-            startService(command);
+        try {
+            state.edit().putString("result", "Running: " + action + "\nSee Logs / diagnostics for progress.").apply();
+            startForegroundService(new Intent(this, NativeRuntimeService.class).setAction(action));
             if (display) showDisplay();
         } catch (Exception error) {
-            state.edit().putString("result", error.toString() + "\nInstall and open Termux once, then enable its external-app setting.").apply();
+            state.edit().putString("result", error.toString()).apply();
         }
     }
     private void showDisplay() {
         try {
-            startActivity(new Intent().setClassName("com.termux.x11", "com.termux.x11.MainActivity")
+            startActivity(new Intent().setClassName(this, "com.termux.x11.MainActivity")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-        } catch (Exception error) { output.setText("Install Termux:X11 first. " + error.getMessage()); }
+        } catch (Exception error) { output.setText(error.toString()); }
     }
-    @Override public void onRequestPermissionsResult(int request, String[] permissions, int[] grants) {
-        super.onRequestPermissionsResult(request, permissions, grants);
-        if (request == 1 && grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED && pendingAction != null) {
-            String action = pendingAction;
-            pendingAction = null;
-            run(action, !action.equals("status") && !action.equals("init") && !action.equals("logs"));
-        } else output.setText("Termux RUN_COMMAND permission is required to start the runtime.");
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (launchAction() != null) run(launchAction(), true);
     }
 
     public static final class WordActivity extends MainActivity { @Override protected String launchAction() { return "word"; } }

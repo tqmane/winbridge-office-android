@@ -43,6 +43,18 @@ def main():
               "export HOME=/data/data/com.termux/files/home PREFIX=/data/data/com.termux/files/usr "
               "TMPDIR=/data/data/com.termux/files/usr/tmp PATH=/data/data/com.termux/files/usr/bin:/system/bin; "
               + shlex.join(args))
+    elif command == "linux":
+        package = "io.github.tqmane.winbridge"
+        apk = shell("pm", "path", package, capture_output=True, text=True).stdout.strip().removeprefix("package:")
+        native = apk.rsplit("/", 1)[0] + "/lib/x86_64"
+        files = "/data/user/0/" + package + "/files"
+        environment = ["LD_LIBRARY_PATH=" + native, "PROOT_TMP_DIR=" + files + "/run",
+                       "PROOT_LOADER=" + native + "/libproot-loader.so", "PROOT_LOADER_32=" + native + "/libproot-loader32.so"]
+        process = [native + "/libproot.so", "-0", "-r", files + "/linux", "-w", "/root",
+                   "-b", "/dev", "-b", "/proc", "-b", "/sys", "-b", files + "/run:/tmp",
+                   "-b", files + "/runtime:/winbridge", "/usr/bin/env", "-i", "HOME=/root",
+                   "PATH=/opt/soda/bin:/usr/bin:/bin", "DISPLAY=:1", "XAUTHORITY=/winbridge/.Xauthority", *args]
+        shell("run-as", package, "sh", "-c", "export " + shlex.join(environment) + "; exec " + shlex.join(process))
     elif command == "screenshot":
         Path(args[0]).write_bytes(adb("exec-out", "screencap", "-p", capture_output=True).stdout)
     elif command == "click":

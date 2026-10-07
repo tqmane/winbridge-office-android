@@ -6,7 +6,8 @@ android {
     defaultConfig {
         applicationId 'io.github.tqmane.winbridge'
         minSdk 33
-        targetSdk 36
+        // ponytail: Soda currently needs legacy PE mapping permissions; raise after fixing the native loader's execmod path.
+        targetSdk providers.gradleProperty('executionTargetSdk').map { it.toInteger() }.getOrElse(28)
         versionCode 1
         versionName '0.1.0-poc'
     }
@@ -17,3 +18,12 @@ android {
     packagingOptions.jniLibs.useLegacyPackaging = true
 }
 dependencies { implementation project(':lorie') }
+
+tasks.named('preBuild') {
+    doFirst {
+        def proot = rootProject.file('.local/native/x86_64/libproot.so')
+        if (!proot.exists() || !new String(proot.bytes, 'ISO-8859-1').contains('5.1.107.96-winbridge')) {
+            throw new GradleException('Missing patched PRoot. Run scripts/build_proot_poc.py; the upstream binary fails the i386 IPC check.')
+        }
+    }
+}

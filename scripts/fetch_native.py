@@ -84,7 +84,6 @@ def main():
     packages = {key: deb_files(fetch("https://packages.termux.dev/apt/termux-main/pool/main/" + path,
                                     digest, path.split("/")[-1]))
                 for key, (path, digest) in PACKAGES.items()}
-    (output / "libproot.so").write_bytes(rename_talloc_needed(packages["proot"][PREFIX + "bin/proot"]))
     (output / "libproot-loader.so").write_bytes(packages["proot"][PREFIX + "libexec/proot/loader"])
     (output / "libproot-loader32.so").write_bytes(packages["proot"][PREFIX + "libexec/proot/loader32"])
     talloc = [data for path, data in packages["talloc"].items() if path.startswith(PREFIX + "lib/libtalloc.so.")]
@@ -96,8 +95,11 @@ def main():
                 "64995746d1887a0e70bc8977d4a9c5ea56e3e00eadd4a6eeab32ae6048ba733a",
                 "termux-x11-universal-debug.apk")
     with zipfile.ZipFile(apk) as archive:
+        dex = archive.read("classes.dex")
+        if b"fa3a8b430e2896a19f44c99a9cb056254615ae06" not in dex:
+            raise ValueError("X11 Java/native source identity does not match the pinned build")
         (output / "libXlorie.so").write_bytes(archive.read("lib/x86_64/libXlorie.so"))
-    print("Verified x86_64 PRoot, loader, talloc, shmem and X11 libraries are ready.")
+    print("Verified x86_64 loaders, talloc, shmem and X11 are ready. Build patched PRoot with build_proot_poc.py.")
 
 
 if __name__ == "__main__":

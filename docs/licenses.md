@@ -4,7 +4,7 @@ Original WinBridge code: GPL-3.0-or-later (root LICENSE).
 
 | Component | Source / version | Licence |
 | --- | --- | --- |
-| Termux:X11 | [fork](https://github.com/tqmane/winbridge-x11), based on `d55f1b7e575de0a7d2b03c5882d5e3d375d01a4f` | GPL-3.0 |
+| Termux:X11 | [fork](https://github.com/tqmane/winbridge-x11), native binary / DEX commit `fa3a8b430e2896a19f44c99a9cb056254615ae06` | GPL-3.0 |
 | PRoot | [termux/proot](https://github.com/termux/proot/tree/v5.1.107.96), 5.1.107.96 | GPL-2.0-or-later (program copyright notice) |
 | talloc | [upstream source](https://www.samba.org/ftp/talloc/talloc-2.5.0.tar.gz), 2.5.0 | Termux package declares GPL-3.0; retain its full copyright notices |
 | libandroid-shmem | [source](https://github.com/termux/libandroid-shmem/tree/v0.7), 0.7 | BSD-3-Clause |

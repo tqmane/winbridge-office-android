@@ -1,9 +1,13 @@
 # Architecture and decisions
 
 The final deliverable must run without an installed Termux or Termux:X11
-companion app. WinBridge will own runtime storage, process lifecycle and display
-integration. Reusing appropriately licensed upstream source is preferable to
-writing a new Wine display driver or Linux compatibility layer.
+companion app. WinBridge owns runtime storage, process lifecycle and display
+integration. The preferred final input path is Android touch, keyboard, mouse
+and stylus events delivered to Wine without an X11 input hop, if a tested native
+backend can preserve Office compatibility. Investigate Wine's Android driver and
+existing Surface/input bridges before choosing that backend. The embedded X11
+implementation remains a compatibility PoC, not a requirement for the final
+input architecture. Reuse appropriately licensed upstream source where possible.
 
 The first experimental backend uses Termux's RUN_COMMAND service, PRoot-Distro,
 and Termux:X11 to isolate Wine and Office compatibility on x86_64 Android.
@@ -19,6 +23,6 @@ Testing uses a dedicated Pixel 9 profile AVD with 32 GB data on the workspace
 drive. A different chat owns the pre-existing Pixel_9 AVD; do not modify, stop,
 clear or install to that shared emulator. Every ADB action must specify the
 verified dedicated emulator serial. Do not restart the shared ADB server.
-The connected A059 physical device is explicitly out of scope: never install,
-launch, inspect, reboot or otherwise operate on it. The test helper rejects
+Physical devices are explicitly out of scope: never install,
+launch, inspect, reboot or otherwise operate on them. The test helper rejects
 physical-device serials before issuing any ADB call.

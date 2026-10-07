@@ -19,7 +19,9 @@ avd.shell("run-as", "com.termux", "sh", "-c", environment +
           'mkdir -p "$HOME/winbridge-proot"; tar -xf /data/local/tmp/winbridge-proot.tar -C "$HOME/winbridge-proot"')
 script = r'''
 set -eu
-apt-get install -y make libtalloc libandroid-shmem
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y clang make libtalloc libandroid-shmem
 cd "$HOME/winbridge-proot"
 export CPPFLAGS='-DARG_MAX=131072 -DVERSION=\"5.1.107.96-winbridge\"'
 make -C src -j2 CC=clang PROOT_WITH_LIBANDROID_SHMEM=true \
@@ -34,7 +36,8 @@ printf 'socketcall32: upstream exit=%s, patched exit=%s\n' "$before" "$after"
 test "$before" = 11
 test "$after" = 0
 mkdir -p "$HOME/.local/share/winbridge/native"
-cp src/proot "$HOME/.local/share/winbridge/native/proot"
+cp src/proot "$HOME/.local/share/winbridge/native/proot.new"
+mv "$HOME/.local/share/winbridge/native/proot.new" "$HOME/.local/share/winbridge/native/proot"
 '''
 avd.shell("run-as", "com.termux", "sh", "-c", environment + "exec bash -s", input=script.encode())
 from fetch_native import rename_talloc_needed

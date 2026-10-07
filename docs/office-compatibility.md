@@ -1,6 +1,8 @@
 # Office compatibility investigation
 
-Office is not installed or verified in this project yet. Do not infer Office
+Office is not installed or verified in this project yet. The official ODT has
+launched and its `/download` stage is retrieving build 16.0.20430.20146 inside
+the standalone app's shared prefix. Do not infer Office
 support from a successful APK build, Linux shell or Wine version command.
 
 ## Official installation path

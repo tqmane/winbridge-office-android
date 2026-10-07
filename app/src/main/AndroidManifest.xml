@@ -1,12 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:node="remove" />
-    <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
-    <queries>
-        <package android:name="com.termux" />
-        <package android:name="com.termux.x11" />
-    </queries>
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:node="remove" tools:ignore="ProtectedPermissions" />
     <application android:label="WinBridge Office" android:icon="@drawable/ic_bridge"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:allowBackup="false" android:supportsRtl="true">

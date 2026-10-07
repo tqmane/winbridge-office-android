@@ -1,6 +1,6 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Temporary companion backend: replace with in-app process/display hosting.
+# Archived companion experiment. Not shipped in or used by the standalone APK.
 set -euo pipefail
 export PREFIX=/data/data/com.termux/files/usr
 export HOME=/data/data/com.termux/files/home
