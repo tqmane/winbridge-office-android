@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "artifacts/native-sdk"
 OUT.mkdir(parents=True, exist_ok=True)
 NAMES = ["libproot.so", "libproot-loader.so", "libproot-loader32.so", "libtalloc.so", "libandroid-shmem.so", "libXlorie.so"]
+NOTICE_PREFIXES = ("COPYING", "LICENSE", "COPYRIGHT", "NOTICE", "AUTHORS")
 
 
 def git(repo, *args):
@@ -45,25 +46,36 @@ def main():
     metadata = {"sources": sources, "sha256": {name: hashlib.sha256((binary.parent / name).read_bytes()).hexdigest() for name in NAMES}}
     metadata_bytes = (json.dumps(metadata, indent=2) + "\n").encode()
     (OUT / "manifest.json").write_bytes(metadata_bytes)
+    talloc = fetch("https://www.samba.org/ftp/talloc/talloc-2.5.0.tar.gz",
+                   "912afa237510ae542a7733998eb18a12bcda35ab6729c8e2ddb43e8d0ebab007", "talloc-2.5.0.tar.gz")
+    shmem = fetch("https://github.com/termux/libandroid-shmem/archive/refs/tags/v0.7.tar.gz",
+                  "1e5ff8459bc0a8c229dd8a94b27d119987e09ef3414331c2b5ebfff20b98e867", "libandroid-shmem-0.7.tar.gz")
+    x11 = ROOT / "third_party/termux-x11"
+    submodules = []
+    for line in git(x11, "submodule", "status", "--recursive").decode().splitlines():
+        if not line.startswith(" "):
+            raise RuntimeError("X11 submodule source is not at its pinned revision: " + line)
+        submodules.append(line.split()[1])
     with zipfile.ZipFile(OUT / "winbridge-native-x86_64.zip", "w", zipfile.ZIP_DEFLATED) as archive:
         for name in NAMES:
             archive.write(binary.parent / name, "x86_64/" + name)
         archive.write(ROOT / "LICENSE", "LICENSE")
         archive.write(ROOT / "docs/licenses.md", "COMPONENTS.md")
         archive.writestr("manifest.json", metadata_bytes)
-    talloc = fetch("https://www.samba.org/ftp/talloc/talloc-2.5.0.tar.gz",
-                   "912afa237510ae542a7733998eb18a12bcda35ab6729c8e2ddb43e8d0ebab007", "talloc-2.5.0.tar.gz")
-    shmem = fetch("https://github.com/termux/libandroid-shmem/archive/refs/tags/v0.7.tar.gz",
-                  "1e5ff8459bc0a8c229dd8a94b27d119987e09ef3414331c2b5ebfff20b98e867", "libandroid-shmem-0.7.tar.gz")
+        for repo in (ROOT / "third_party/proot", x11, *(x11 / path for path in submodules)):
+            for path in repo.iterdir():
+                if path.is_file() and path.name.upper().startswith(NOTICE_PREFIXES):
+                    archive.write(path, "licenses/" + str(path.relative_to(ROOT)).replace("\\", "/"))
+        for dependency in (talloc, shmem):
+            with tarfile.open(dependency) as source:
+                for member in source:
+                    if member.isfile() and Path(member.name).name.upper().startswith(NOTICE_PREFIXES):
+                        archive.writestr("licenses/" + member.name, source.extractfile(member).read())
     with tarfile.open(OUT / "winbridge-native-sources.tar.gz", "w:gz") as archive:
         add_git(archive, ROOT, "winbridge-office-android")
         add_git(archive, ROOT / "third_party/proot", "winbridge-office-android/third_party/proot")
-        x11 = ROOT / "third_party/termux-x11"
         add_git(archive, x11, "winbridge-office-android/third_party/termux-x11")
-        for line in git(x11, "submodule", "status", "--recursive").decode().splitlines():
-            if not line.startswith(" "):
-                raise RuntimeError("X11 submodule source is not at its pinned revision: " + line)
-            path = line.split()[1]
+        for path in submodules:
             add_git(archive, x11 / path, "winbridge-office-android/third_party/termux-x11/" + path)
         recipes = ROOT / "upstream/termux-packages"
         root_files = [p.name for p in recipes.iterdir() if p.is_file()]
